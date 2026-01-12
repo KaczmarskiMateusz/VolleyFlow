@@ -1,5 +1,7 @@
 package pl.volleyflow.user.model;
 
+import pl.volleyflow.authorization.model.UserRegisterRequest;
+
 public final class UserAccountMapper {
 
     public static UserAccount fromRegisterRequest(UserRegisterRequest u) {
