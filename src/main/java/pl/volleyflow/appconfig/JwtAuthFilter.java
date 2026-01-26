@@ -66,9 +66,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        Set<SimpleGrantedAuthority> authorities = user.getGlobalRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
-                .collect(Collectors.toUnmodifiableSet());
+        Set<SimpleGrantedAuthority> authorities =
+                Set.of(new SimpleGrantedAuthority("ROLE_" + user.getGlobalRole().name()));
 
         UserPrincipal principal = new UserPrincipal(
                 user.getExternalId(),
