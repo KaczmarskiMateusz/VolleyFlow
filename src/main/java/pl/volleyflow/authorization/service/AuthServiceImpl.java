@@ -44,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(InvalidCredentialsException::new);
 
         if (!validPassword(request.password(), user.getPasswordHash())) {
-            LOGGER.warn("Login failed for {}", email);
+            LOGGER.info("Login failed for {}", email);
             throw new InvalidCredentialsException();
         }
 
