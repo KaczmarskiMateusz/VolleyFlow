@@ -1,4 +1,4 @@
-package pl.volleyflow.club;
+package pl.volleyflow.club.model;
 
 import jakarta.persistence.*;
 import lombok.*;
