@@ -9,15 +9,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import pl.volleyflow.authorization.model.UserPrincipal;
 import pl.volleyflow.user.model.UserAccount;
-import pl.volleyflow.user.repository.UserRepository;
+import pl.volleyflow.user.repository.UserAccountRepository;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserRepository userAccountRepository;
+    private final UserAccountRepository userAccountRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -60,24 +60,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        UserAccount user = userAccountRepository.findByExternalId(externalId)
-                .orElse(null);
-
+        UserAccount user = userAccountRepository.findByExternalId(externalId).orElse(null);
         if (user == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        var authorities = user.getGlobalRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toSet());
+        Set<SimpleGrantedAuthority> authorities = user.getGlobalRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
+                .collect(Collectors.toUnmodifiableSet());
 
-        var authToken = new UsernamePasswordAuthenticationToken(
-                user, null, authorities
+        UserPrincipal principal = new UserPrincipal(
+                user.getExternalId(),
+                user.getEmail(),
+                authorities
         );
+
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
     }
+
 }
