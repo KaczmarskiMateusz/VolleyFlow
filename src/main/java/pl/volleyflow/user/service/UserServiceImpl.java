@@ -30,7 +30,7 @@ public class UserServiceImpl implements UserService {
 
         UserAccount user = UserAccountMapper.fromRegisterRequest(request);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.addGlobalRole(GlobalRole.USER);
+        user.setGlobalRole(GlobalRole.USER);
         userAccountRepository.save(user);
 
         return user;

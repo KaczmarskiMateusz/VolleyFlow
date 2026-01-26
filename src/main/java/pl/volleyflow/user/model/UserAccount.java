@@ -78,40 +78,15 @@ public class UserAccount {
     @Builder.Default
     private AccountStatus status = AccountStatus.ACTIVE;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-            name = "user_global_roles",
-            schema = "app",
-            joinColumns = @JoinColumn(name = "user_account_id")
-    )
-    @Column(name = "role", nullable = false, length = 40)
+    @Setter
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private Set<GlobalRole> globalRoles = new HashSet<>();
+    @Column(name = "global_role", nullable = false, length = 40)
+    private GlobalRole globalRole = GlobalRole.USER;
 
     @Setter
     @Column(name = "avatar_url", length = 2048)
     private String avatarUrl;
 
-    // --- helpers (biznes możesz mieć też w serwisie, ale te są wygodne) ---
-
-    public void addGlobalRole(GlobalRole role) {
-        if (role != null) globalRoles.add(role);
-    }
-
-    public void removeGlobalRole(GlobalRole role) {
-        if (role != null) globalRoles.remove(role);
-    }
-
-    public void activate() {
-        this.status = AccountStatus.ACTIVE;
-    }
-
-    public void disable() {
-        this.status = AccountStatus.DISABLED;
-    }
-
-    // --- JPA lifecycle ---
 
     @PrePersist
     void prePersist() {
@@ -124,7 +99,6 @@ public class UserAccount {
         updatedAt = now;
 
         if (status == null) status = AccountStatus.ACTIVE;
-        if (globalRoles == null) globalRoles = new HashSet<>();
     }
 
     @PreUpdate
