@@ -14,9 +14,6 @@ public class ClubMapper {
                 .city(club.getCity())
                 .logoUrl(club.getLogoUrl())
                 .status(club.getStatus())
-                .createdAt(club.getCreatedAt())
-                .updatedAt(club.getUpdatedAt())
-                .version(club.getVersion())
                 .build();
     }
 
