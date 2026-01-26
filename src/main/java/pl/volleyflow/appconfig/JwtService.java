@@ -35,7 +35,7 @@ public class JwtService {
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(exp))
                 .claim("email", user.getEmail())
-                .claim("roles", user.getGlobalRoles())
+                .claim("roles", user.getGlobalRoles().stream().map(Enum::name).toList())
                 .signWith(signingKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
