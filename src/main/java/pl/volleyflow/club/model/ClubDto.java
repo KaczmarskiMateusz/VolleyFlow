@@ -12,9 +12,6 @@ public record ClubDto(
         String description,
         String city,
         String logoUrl,
-        ClubStatus status,
-        Instant createdAt,
-        Instant updatedAt,
-        Integer version
+        ClubStatus status
 ) {
 }
