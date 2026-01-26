@@ -1,7 +1,10 @@
 package pl.volleyflow.authorization.model;
 
+import java.util.List;
+
 public record ApiErrorResponse(
-        ErrorCode code,
+        ErrorCode errorCode,
         String message
 ) {
+
 }
