@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto registerUser(UserRegisterRequest request) {
+    public UserAccount registerUser(UserRegisterRequest request) {
         if (userAccountRepository.existsByEmail(request.email())) {
             throw new UserAlreadyExistsException("Email already taken: " + request.email());
         }
@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
         UserAccount saved = userAccountRepository.save(user);
         log.info("Registered user externalId={}, email={}", saved.getExternalId(), saved.getEmail());
 
-        return UserAccountMapper.toDto(saved);
+        return saved;
     }
 
     @Override

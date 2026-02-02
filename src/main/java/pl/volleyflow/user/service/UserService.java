@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface UserService {
 
-    UserDto registerUser(UserRegisterRequest userAccount);
+    UserAccount registerUser(UserRegisterRequest userAccount);
 
     Optional<UserAccount> getUserByEmail(String email);
 
