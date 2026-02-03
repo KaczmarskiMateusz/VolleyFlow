@@ -64,6 +64,7 @@ public class UserServiceImpl implements UserService {
         UserAccountMapper.applyPut(user, request);
 
         UserAccount saved = userAccountRepository.save(user);
+        log.info("Put user successful externalId={}, email={}", externalId, saved.getEmail());
         return UserAccountMapper.toDto(saved);
     }
 
@@ -76,6 +77,18 @@ public class UserServiceImpl implements UserService {
         UserAccountMapper.applyPatch(user, request);
 
         UserAccount saved = userAccountRepository.save(user);
+        log.info("Patch user successful externalId={}, email={}", saved.getExternalId(), saved.getEmail());
         return UserAccountMapper.toDto(saved);
     }
+
+    @Override
+    public void deleteUser(UUID externalId) {
+        UserAccount user = userAccountRepository.findByExternalId(externalId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        userAccountRepository.delete(user);
+        log.info("Deleted user externalId={}, email={}", externalId, user.getEmail());
+    }
+
+
 }

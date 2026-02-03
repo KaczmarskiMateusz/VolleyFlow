@@ -35,5 +35,11 @@ public class UserAccountController {
         return ResponseEntity.ok(userService.patchUser(request, principal.externalId()));
     }
 
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal UserPrincipal principal) {
+        userService.deleteUser(principal.externalId());
+        return ResponseEntity.noContent().build();
+    }
+
 
 }

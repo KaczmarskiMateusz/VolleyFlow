@@ -19,4 +19,6 @@ public interface UserService {
     UserDto putUser(UserUpdateRequest request, UUID uuid);
 
     UserDto patchUser(UserUpdateRequest request, UUID uuid);
+
+    void deleteUser(UUID externalId);
 }
