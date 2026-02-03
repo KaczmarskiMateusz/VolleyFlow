@@ -1,4 +1,4 @@
-package pl.volleyflow.user.service;
+package pl.volleyflow.user.service.exceptions;
 
 public class UserNotFoundException extends RuntimeException {
 
