@@ -11,7 +11,7 @@ import pl.volleyflow.clubmember.model.MembershipStatus;
 import pl.volleyflow.clubmember.repository.ClubMemberRepository;
 import pl.volleyflow.user.model.UserAccount;
 import pl.volleyflow.user.repository.UserAccountRepository;
-import pl.volleyflow.user.service.UserNotFoundException;
+import pl.volleyflow.user.service.exceptions.UserNotFoundException;
 
 import java.util.List;
 import java.util.UUID;

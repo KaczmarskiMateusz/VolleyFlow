@@ -12,7 +12,7 @@ import pl.volleyflow.authorization.model.UserRegisterRequest;
 import pl.volleyflow.user.model.UserAccount;
 import pl.volleyflow.user.model.UserAccountMapper;
 import pl.volleyflow.user.model.UserDto;
-import pl.volleyflow.user.service.InvalidCredentialsException;
+import pl.volleyflow.user.service.exceptions.InvalidCredentialsException;
 import pl.volleyflow.user.service.UserService;
 
 @Service

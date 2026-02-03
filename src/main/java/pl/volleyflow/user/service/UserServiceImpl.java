@@ -12,6 +12,8 @@ import pl.volleyflow.user.model.UserAccount;
 import pl.volleyflow.user.model.UserAccountMapper;
 import pl.volleyflow.user.model.UserDto;
 import pl.volleyflow.user.repository.UserAccountRepository;
+import pl.volleyflow.user.service.exceptions.UserAlreadyExistsException;
+import pl.volleyflow.user.service.exceptions.UserNotFoundException;
 
 import java.util.Optional;
 import java.util.UUID;

@@ -5,10 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import pl.volleyflow.authorization.model.ApiErrorResponse;
-import pl.volleyflow.user.service.EmailAlreadyExistsException;
-import pl.volleyflow.user.service.InvalidCredentialsException;
+import pl.volleyflow.user.service.exceptions.EmailAlreadyExistsException;
 
-import static pl.volleyflow.authorization.model.ErrorCode.AUTH_INVALID_CREDENTIALS;
 import static pl.volleyflow.authorization.model.ErrorCode.EMAIL_ALREADY_EXISTS;
 
 @RestControllerAdvice

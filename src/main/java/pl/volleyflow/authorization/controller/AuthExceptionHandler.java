@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import pl.volleyflow.authorization.model.ApiErrorResponse;
-import pl.volleyflow.user.service.InvalidCredentialsException;
+import pl.volleyflow.user.service.exceptions.InvalidCredentialsException;
 
 import static pl.volleyflow.authorization.model.ErrorCode.AUTH_INVALID_CREDENTIALS;
 
