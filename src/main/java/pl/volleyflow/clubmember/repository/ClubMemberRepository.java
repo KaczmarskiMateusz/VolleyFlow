@@ -2,7 +2,6 @@ package pl.volleyflow.clubmember.repository;
 
 import org.springframework.data.repository.CrudRepository;
 import pl.volleyflow.club.model.Club;
-import pl.volleyflow.club.model.ClubRole;
 import pl.volleyflow.clubmember.model.ClubMember;
 import pl.volleyflow.user.model.UserAccount;
 
@@ -20,5 +19,7 @@ public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
     Optional<ClubMember> findByClubExternalIdAndUserExternalId(UUID clubExternalId, UUID userExternalId);
 
     Optional<ClubMember> findByInviteToken(String inviteToken);
+
+    boolean existsByClubIdAndEmail(Long clubId, String email);
 
 }

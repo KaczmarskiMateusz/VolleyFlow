@@ -14,5 +14,7 @@ public interface UserAccountRepository extends CrudRepository<UserAccount, Long>
 
     boolean existsByEmail(String email);
 
+    boolean existsByExternalId(UUID externalId);
+
     Optional<UserAccount> findByExternalId(UUID externalId);
 }

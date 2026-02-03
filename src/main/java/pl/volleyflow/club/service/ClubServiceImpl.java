@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import pl.volleyflow.club.model.*;
 import pl.volleyflow.club.repository.ClubRepository;
 import pl.volleyflow.clubmember.model.ClubMember;
-import pl.volleyflow.clubmember.model.ClubMemberForbiddenException;
+import pl.volleyflow.clubmember.model.exceptions.ClubMemberForbiddenException;
 import pl.volleyflow.clubmember.model.MembershipStatus;
 import pl.volleyflow.clubmember.repository.ClubMemberRepository;
 import pl.volleyflow.user.model.UserAccount;

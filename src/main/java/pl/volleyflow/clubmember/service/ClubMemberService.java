@@ -7,10 +7,6 @@ import java.util.UUID;
 
 public interface ClubMemberService {
 
-    MemberResponse addOrInviteMember(UUID clubExternalId, AddMemberRequest req);
-
-    void resendInvitation(UUID clubExternalId, UUID memberExternalId);
-
-    void removeMember(UUID clubExternalId, UUID memberExternalId);
+    MemberResponse addMember(UUID clubExternalId, AddMemberRequest req, UUID userExternalId);
 
 }

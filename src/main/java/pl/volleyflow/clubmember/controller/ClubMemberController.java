@@ -24,25 +24,25 @@ public class ClubMemberController {
     public ResponseEntity<MemberResponse> addMember(@PathVariable UUID clubExternalId,
                                                     @RequestBody @Valid AddMemberRequest req,
                                                     @AuthenticationPrincipal UserPrincipal principal) {
-        MemberResponse created = clubMemberService.addOrInviteMember(clubExternalId, req);
+        MemberResponse created = clubMemberService.addMember(clubExternalId, req, principal.externalId());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PostMapping("/{memberExternalId}/resend-invitation")
-    public ResponseEntity<Void> resendInvitation(@PathVariable UUID clubExternalId,
-                                                 @PathVariable UUID memberExternalId,
-                                                 @AuthenticationPrincipal UserPrincipal principal) {
-        clubMemberService.resendInvitation(clubExternalId, memberExternalId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{memberExternalId}")
-    public ResponseEntity<Void> removeMember(@PathVariable UUID clubExternalId,
-                                             @PathVariable UUID memberExternalId,
-                                             @AuthenticationPrincipal UserPrincipal principal) {
-        clubMemberService.removeMember(clubExternalId, memberExternalId);
-        return ResponseEntity.noContent().build();
-    }
+//    @PostMapping("/{memberExternalId}/resend-invitation")
+//    public ResponseEntity<Void> resendInvitation(@PathVariable UUID clubExternalId,
+//                                                 @PathVariable UUID memberExternalId,
+//                                                 @AuthenticationPrincipal UserPrincipal principal) {
+//        clubMemberService.resendInvitation(clubExternalId, memberExternalId);
+//        return ResponseEntity.noContent().build();
+//    }
+//
+//    @DeleteMapping("/{memberExternalId}")
+//    public ResponseEntity<Void> removeMember(@PathVariable UUID clubExternalId,
+//                                             @PathVariable UUID memberExternalId,
+//                                             @AuthenticationPrincipal UserPrincipal principal) {
+//        clubMemberService.removeMember(clubExternalId, memberExternalId);
+//        return ResponseEntity.noContent().build();
+//    }
 
 }
 
