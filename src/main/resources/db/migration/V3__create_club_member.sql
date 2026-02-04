@@ -38,28 +38,11 @@ CREATE TABLE IF NOT EXISTS app.club_member
     CONSTRAINT fk_club_member_invited_by_user
         FOREIGN KEY (invited_by_user_account_id)
             REFERENCES app.user_account (id)
-            ON DELETE SET NULL,
+            ON DELETE RESTRICT,
 
-    CONSTRAINT ck_club_member_invited_requires_fields
-        CHECK (
-            (status <> 'INVITED')
-            OR (user_account_id IS NULL AND invited_email IS NOT NULL AND invite_token IS NOT NULL)
-        ),
-
-    CONSTRAINT ck_club_member_user_cannot_have_invite_token
-        CHECK (
-            user_account_id IS NULL OR invite_token IS NULL
-        ),
-
-    CONSTRAINT ck_club_member_user_null_means_invited
-        CHECK (
-            user_account_id IS NOT NULL OR status = 'INVITED'
-        )
+    CONSTRAINT uk_club_member_club_invited_email
+        UNIQUE (club_id, invited_email)
 );
-
-CREATE UNIQUE INDEX IF NOT EXISTS ux_club_member_user_club_not_null
-    ON app.club_member (club_id, user_account_id)
-    WHERE user_account_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_club_member_external_id    ON app.club_member (external_id);
 CREATE INDEX IF NOT EXISTS idx_club_member_club_id        ON app.club_member (club_id);

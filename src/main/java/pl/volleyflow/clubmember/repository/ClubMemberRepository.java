@@ -1,25 +1,42 @@
 package pl.volleyflow.clubmember.repository;
 
+import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import pl.volleyflow.club.model.Club;
 import pl.volleyflow.clubmember.model.ClubMember;
-import pl.volleyflow.user.model.UserAccount;
+import pl.volleyflow.clubmember.model.MembershipStatus;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
 
-    Optional<ClubMember> findByClubAndUser(Club club, UserAccount user);
+    @Query("""
+                select cm
+                from ClubMember cm
+                where cm.clubId = :clubId
+                  and cm.user.id = :userId
+                  and cm.status = :status
+            """)
+    Optional<ClubMember> findByClubIdAndUserIdAndStatus(@Param("clubId") Long clubId,
+                                                        @Param("userId") Long userId,
+                                                        @Param("status") MembershipStatus status);
 
-    Optional<ClubMember> findByClubAndUserIsNullAndInvitedEmail(Club club, String invitedEmail);
+    @Query("""
+                select case when count(cm) > 0 then true else false end
+                from ClubMember cm
+                where cm.clubId = :clubId
+                  and cm.invitedEmail = :email
+            """)
+    boolean existsByClubIdAndInvitedEmail(@Param("clubId") Long clubId,
+                                          @Param("email") String email);
 
-    Optional<ClubMember> findByClubAndExternalId(Club club, UUID externalId);
-
-    Optional<ClubMember> findByClubExternalIdAndUserExternalId(UUID clubExternalId, UUID userExternalId);
-
-    Optional<ClubMember> findByInviteToken(String inviteToken);
-
-    boolean existsByClubIdAndEmail(Long clubId, String email);
-
+    @Query("""
+                select case when count(cm) > 0 then true else false end
+                from ClubMember cm
+                where cm.clubId = :clubId
+                  and cm.user.id = :userId
+                  and cm.status = 'ACTIVE'
+            """)
+    boolean isClubIdAndUserId(@Param("clubId") Long clubId,
+                              @Param("userId") Long userId);
 }

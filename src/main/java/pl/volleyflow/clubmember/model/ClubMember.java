@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import pl.volleyflow.club.model.ClubRole;
+import pl.volleyflow.user.model.UserAccount;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -12,10 +13,17 @@ import java.util.UUID;
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder(access = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "club_member",
+@Table(
+        name = "club_member",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_club_member_club_invited_email",
+                        columnNames = {"club_id", "invited_email"}
+                )
+        },
         indexes = {
                 @Index(name = "idx_club_member_club_id", columnList = "club_id"),
                 @Index(name = "idx_club_member_user_id", columnList = "user_account_id"),
@@ -37,8 +45,9 @@ public class ClubMember {
     @Column(name = "club_id", nullable = false)
     private Long clubId;
 
-    @Column(name = "user_account_id")
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_account_id")
+    private UserAccount user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
@@ -60,8 +69,9 @@ public class ClubMember {
     @Column(name = "invite_accepted_at")
     private Instant inviteAcceptedAt;
 
-    @Column(name = "invited_by_user_account_id")
-    private Long invitedByUserId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invited_by_user_account_id")
+    private UserAccount invitedBy;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -78,26 +88,49 @@ public class ClubMember {
     @Column(name = "joined_at")
     private Instant joinedAt;
 
-    public static ClubMember addClubMember(Long clubId,
-                                           ClubRole role,
-                                           String invitedEmailNormalized,
-                                           String inviteToken,
-                                           Instant inviteExpiresAt,
-                                           Long invitedBy,
-                                           Long userId) {
-        ClubMember cm = ClubMember.builder()
-                .externalId(UUID.randomUUID())
+    @PrePersist
+    void prePersist() {
+        if (externalId == null) externalId = UUID.randomUUID();
+    }
+
+    public static ClubMember invite(Long clubId,
+                                    ClubRole role,
+                                    String invitedEmailNormalized,
+                                    String inviteToken,
+                                    Instant inviteExpiresAt,
+                                    UserAccount invitedBy,
+                                    UserAccount userOrNull) {
+
+        return ClubMember.builder()
                 .clubId(clubId)
-                .userId(null)
                 .role(role)
                 .status(MembershipStatus.INVITED)
                 .invitedEmail(invitedEmailNormalized)
                 .inviteToken(inviteToken)
                 .inviteExpiresAt(inviteExpiresAt)
-                .invitedByUserId(invitedBy)
+                .invitedBy(invitedBy)
+                .user(userOrNull)
                 .build();
-
-        return cm;
     }
+
+    public void accept(UserAccount user) {
+        this.user = user;
+        this.status = MembershipStatus.ACTIVE;
+        this.inviteAcceptedAt = Instant.now();
+        this.joinedAt = Instant.now();
+        this.inviteToken = null;
+        this.inviteExpiresAt = null;
+    }
+
+    public static ClubMember createOwner(Long clubId, UserAccount user) {
+        return ClubMember.builder()
+                .clubId(clubId)
+                .user(user)
+                .role(ClubRole.OWNER)
+                .status(MembershipStatus.ACTIVE)
+                .joinedAt(Instant.now())
+                .build();
+    }
+
 
 }

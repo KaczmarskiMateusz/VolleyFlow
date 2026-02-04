@@ -1,13 +1,11 @@
 package pl.volleyflow.club.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pl.volleyflow.club.model.*;
 import pl.volleyflow.club.repository.ClubRepository;
 import pl.volleyflow.clubmember.model.ClubMember;
-import pl.volleyflow.clubmember.model.exceptions.ClubMemberForbiddenException;
-import pl.volleyflow.clubmember.model.MembershipStatus;
 import pl.volleyflow.clubmember.repository.ClubMemberRepository;
 import pl.volleyflow.user.model.UserAccount;
 import pl.volleyflow.user.repository.UserAccountRepository;
@@ -27,18 +25,13 @@ public class ClubServiceImpl implements ClubService {
     @Transactional
     public ClubDto createClub(CreateClubRequest request, UUID userExternalId) {
 
-        UserAccount user = getUserAccount(userExternalId);
+        UserAccount user = getUserAccountOrThrow(userExternalId);
 
         Club club = ClubMapper.fromCreateRequest(request);
 
         clubRepository.save(club);
 
-        ClubMember ownerMembership = ClubMember.builder()
-                .club(club)
-                .user(user)
-                .role(ClubRole.OWNER)
-                .status(MembershipStatus.ACTIVE) // TODO SEND EMAIL WITH TOKEN TO ACTIVE ACCOUNT
-                .build();
+        ClubMember ownerMembership = ClubMember.createOwner(club.getId(), user);
 
         clubMemberRepository.save(ownerMembership);
 
@@ -46,22 +39,17 @@ public class ClubServiceImpl implements ClubService {
     }
 
     @Override
-    @Transactional()
-    public ClubDto getByExternalId(UUID clubId, UUID userExternalId) {
-        UserAccount user = getUserAccount(userExternalId);
+    @Transactional(readOnly = true)
+    public ClubDto getByExternalId(UUID clubExternalId, UUID userExternalId) {
+        UserAccount user = getUserAccountOrThrow(userExternalId);
 
-        ClubMember member = clubMemberRepository
-                .findByClubExternalIdAndUserExternalId(clubId, user.getExternalId())
-                .orElseThrow(() -> new ClubMemberForbiddenException("User is not a member of this club"));
+        Club club = getClubOrThrow(clubExternalId);
 
-        if (member.getStatus() != MembershipStatus.ACTIVE) {
-            throw new ClubMemberForbiddenException("Membership is not active");
-        }
+        boolean isMember = clubMemberRepository.isClubIdAndUserId(club.getId(), user.getId());
 
-        Club club = member.getClub();
-        ClubDto dto = ClubMapper.toDto(club);
-
-        return dto;
+        return isMember
+                ? ClubMapper.toDto(club)
+                : ClubMapper.toDtoWithoutMembers(club);
     }
 
     @Override
@@ -79,10 +67,15 @@ public class ClubServiceImpl implements ClubService {
         return List.of();
     }
 
-    private UserAccount getUserAccount(UUID userExternalId) {
+    private UserAccount getUserAccountOrThrow(UUID userExternalId) {
         UserAccount user = userAccountRepository.findByExternalId(userExternalId)
                 .orElseThrow(() -> new UserNotFoundException("User with externalID:" + userExternalId + " not found"));
         return user;
+    }
+
+    private Club getClubOrThrow(UUID clubExternalId) {
+        return clubRepository.findByExternalId(clubExternalId)
+                .orElseThrow(() -> new ClubNotFoundException("Club not found"));
     }
 
 }

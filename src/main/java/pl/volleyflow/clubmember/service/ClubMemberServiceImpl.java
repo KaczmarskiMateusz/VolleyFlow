@@ -1,9 +1,9 @@
 package pl.volleyflow.clubmember.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pl.volleyflow.club.model.Club;
 import pl.volleyflow.club.model.ClubNotFoundException;
 import pl.volleyflow.club.repository.ClubRepository;
@@ -37,7 +37,6 @@ public class ClubMemberServiceImpl implements ClubMemberService {
     public MemberResponse addMember(UUID clubExternalId,
                                     AddMemberRequest request,
                                     UUID inviterExternalId) {
-
         UserAccount inviter = userAccountRepository.findByExternalId(inviterExternalId)
                 .orElseThrow(() -> new UserNotFoundException(
                         "User with externalId " + inviterExternalId + " not found"));
@@ -46,24 +45,25 @@ public class ClubMemberServiceImpl implements ClubMemberService {
                 .orElseThrow(() -> new ClubNotFoundException(
                         "Club with externalId " + clubExternalId + " not found"));
 
-        if (clubMemberRepository.existsByClubIdAndEmail(club.getId(), request.email())) {
+
+        if (clubMemberRepository.existsByClubIdAndInvitedEmail(club.getId(), normalizeEmail(request.email()))) {
             throw new ClubMemberAlreadyExistsException(
                     "Member with email " + request.email() + " already exists in club " + clubExternalId);
         }
 
-        Optional<UserAccount> invitedUserOpt = userAccountRepository.findByEmail(request.email());
+        Optional<UserAccount> invitedUserOpt = userAccountRepository.findByEmail(normalizeEmail(request.email()));
 
         Instant expiresAt = Instant.now().plus(TTL_FOR_INVITATION_DAYS, ChronoUnit.DAYS);
         String invitationToken = UUID.randomUUID().toString();
 
-        ClubMember clubMember = ClubMember.addClubMember(
+        ClubMember clubMember = ClubMember.invite(
                 club.getId(),
                 request.role(),
                 request.email(),
                 invitationToken,
                 expiresAt,
-                inviter.getId(),
-                invitedUserOpt.map(UserAccount::getId).orElse(null)
+                inviter,
+                invitedUserOpt.orElse(null)
         );
 
         clubMemberRepository.save(clubMember);
@@ -78,6 +78,10 @@ public class ClubMemberServiceImpl implements ClubMemberService {
                 inviter.getEmail(),
                 invitedUserOpt.map(UserAccount::getExternalId).orElse(null)
         );
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
     }
 
 }

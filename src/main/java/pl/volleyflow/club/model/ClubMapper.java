@@ -17,6 +17,7 @@ public class ClubMapper {
                 .build();
     }
 
+
     public static Club fromCreateRequest(CreateClubRequest request) {
         Objects.requireNonNull(request, "request");
 
@@ -51,5 +52,15 @@ public class ClubMapper {
         if (value == null) return null;
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    public static ClubDto toDtoWithoutMembers(Club club) {
+        if (club == null) return null;
+
+        return ClubDto.builder()
+                .name(club.getName())
+                .city(club.getCity())
+                .logoUrl(club.getLogoUrl())
+                .build();
     }
 }
