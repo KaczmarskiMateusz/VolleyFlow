@@ -1,4 +1,4 @@
-package pl.volleyflow.club.model;
+package pl.volleyflow.club.model.exceptions;
 
 public class ClubAlreadyExistsException extends RuntimeException {
 

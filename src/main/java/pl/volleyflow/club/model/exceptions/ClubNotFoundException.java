@@ -1,4 +1,4 @@
-package pl.volleyflow.club.model;
+package pl.volleyflow.club.model.exceptions;
 
 public class ClubNotFoundException extends RuntimeException {
     public ClubNotFoundException(String clubExternalId) {
