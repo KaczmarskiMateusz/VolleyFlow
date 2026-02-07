@@ -67,6 +67,12 @@ public class ClubServiceImpl implements ClubService {
         return List.of();
     }
 
+    @Override
+    public List<ClubListView> getUserClubs(UUID uuid) {
+        UserAccount user = getUserAccountOrThrow(uuid);
+        return clubMemberRepository.findUserClubs(user.getId());
+    }
+
     private UserAccount getUserAccountOrThrow(UUID userExternalId) {
         UserAccount user = userAccountRepository.findByExternalId(userExternalId)
                 .orElseThrow(() -> new UserNotFoundException("User with externalID:" + userExternalId + " not found"));

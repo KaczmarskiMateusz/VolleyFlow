@@ -1,9 +1,7 @@
 package pl.volleyflow.club.service;
 
 
-import pl.volleyflow.club.model.ClubDto;
-import pl.volleyflow.club.model.CreateClubRequest;
-import pl.volleyflow.club.model.UpdateClubRequest;
+import pl.volleyflow.club.model.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,5 +17,7 @@ public interface ClubService {
     void deleteClub(UUID clubId, UUID userExternalId);
 
     List<ClubDto> getAllClubs();
+
+    List<ClubListView> getUserClubs(UUID uuid);
 }
 

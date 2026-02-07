@@ -6,10 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import pl.volleyflow.authorization.model.UserPrincipal;
-import pl.volleyflow.club.model.ClubDto;
-import pl.volleyflow.club.model.ClubListDto;
-import pl.volleyflow.club.model.CreateClubRequest;
-import pl.volleyflow.club.model.UpdateClubRequest;
+import pl.volleyflow.club.model.*;
 import pl.volleyflow.club.service.ClubService;
 
 import javax.validation.Valid;
@@ -49,10 +46,11 @@ public class ClubController {
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public ResponseEntity<List<ClubDto>> getAllClubs() {
-        return ResponseEntity.ok(clubService.getAllClubs());
+    @GetMapping("/my")
+    public ResponseEntity<List<ClubListView>> getUserClubs(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(clubService.getUserClubs(principal.externalId()));
     }
+    
+
 
 }
