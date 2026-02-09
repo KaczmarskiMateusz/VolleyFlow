@@ -43,8 +43,8 @@ public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
                       and cm.status = 'ACTIVE'
                 )
             """, nativeQuery = true)
-    boolean isClubIdAndUserId(@Param("clubId") Long clubId,
-                              @Param("userId") Long userId);
+    boolean isUserInRole(@Param("clubId") Long clubId,
+                         @Param("userId") Long userId);
 
     @Query(value = """
                 select

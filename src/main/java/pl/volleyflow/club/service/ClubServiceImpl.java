@@ -46,7 +46,7 @@ public class ClubServiceImpl implements ClubService {
 
         Club club = getClubOrThrow(clubExternalId);
 
-        boolean isMember = clubMemberRepository.isClubIdAndUserId(club.getId(), user.getId());
+        boolean isMember = clubMemberRepository.isUserInRole(club.getId(), user.getId());
 
         log.info("User externalId={} is {} of club externalId={}",
                 userExternalId, isMember ? "member" : "not member", clubExternalId);
@@ -58,10 +58,10 @@ public class ClubServiceImpl implements ClubService {
 
     @Transactional
     @Override
-    public ClubDto updateClub(UUID clubId, UpdateClubRequest request, UUID userExternalId) {
+    public ClubDto updateClub(UUID clubExternalId, UpdateClubRequest request, UUID userExternalId) {
         UserAccount user = getUserAccountOrThrow(userExternalId);
 
-        Club club = getClubOrThrow(clubId);
+        Club club = getClubOrThrow(clubExternalId);
 
         if (!clubMemberRepository.findUserRoleInClub(club.getId(), user.getId(), ClubRole.OWNER.name())) {
             throw new ClubPermissionException("No permissions to update club");
@@ -76,14 +76,15 @@ public class ClubServiceImpl implements ClubService {
 
     @Transactional
     @Override
-    public void deleteClub(UUID clubId, UUID userExternalId) {
+    public void deleteClub(UUID clubExternalId, UUID userExternalId) {
         UserAccount user = getUserAccountOrThrow(userExternalId);
-        Club club = getClubOrThrow(clubId);
+        Club club = getClubOrThrow(clubExternalId);
         if (!clubMemberRepository.findUserRoleInClub(club.getId(), user.getId(), ClubRole.OWNER.name())) {
             throw new ClubPermissionException("No permissions to delete club");
         }
-        clubRepository.delete(club);
+        club.changeStatus(ClubStatus.DELETED);
         log.info("Deleted club externalId={}, name={}", club.getExternalId(), club.getName());
+        clubRepository.save(club);
     }
 
 
@@ -97,9 +98,9 @@ public class ClubServiceImpl implements ClubService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ClubListView> getUserClubs(UUID uuid) {
-        UserAccount user = getUserAccountOrThrow(uuid);
-        log.info("Getting clubs for user externalId={}", uuid);
+    public List<ClubListView> getUserClubs(UUID userExternalId) {
+        UserAccount user = getUserAccountOrThrow(userExternalId);
+        log.info("Getting clubs for user externalId={}", userExternalId);
         return clubMemberRepository.findUserClubs(user.getId());
     }
 

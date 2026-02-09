@@ -5,6 +5,7 @@ public enum ClubStatus {
     ACTIVE,
     DISABLED,
     ARCHIVED,
-    TO_CONFIRM
+    TO_CONFIRM,
+    DELETED
 
 }
