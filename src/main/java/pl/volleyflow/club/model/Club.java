@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString
 public class Club {
@@ -32,23 +33,22 @@ public class Club {
     @Column(name = "external_id", nullable = false, unique = true, updatable = false)
     private UUID externalId;
 
-    @Setter
     @Column(name = "name", nullable = false, length = 160)
+    @Setter
     private String name;
 
-    @Setter
     @Column(name = "description", length = 2000)
+    @Setter
     private String description;
 
-    @Setter
     @Column(name = "city", length = 120)
+    @Setter
     private String city;
 
-    @Setter
     @Column(name = "logo_url", length = 2048)
+    @Setter
     private String logoUrl;
 
-    @Setter
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
@@ -67,9 +67,11 @@ public class Club {
     @PrePersist
     void prePersist() {
         if (externalId == null) externalId = UUID.randomUUID();
+
         Instant now = Instant.now();
         if (createdAt == null) createdAt = now;
         updatedAt = now;
+
         if (status == null) status = ClubStatus.ACTIVE;
     }
 
@@ -78,16 +80,46 @@ public class Club {
         updatedAt = Instant.now();
     }
 
-    public boolean isActive() {
-        return status == ClubStatus.ACTIVE;
+    public void activate() {
+        if (status == ClubStatus.ARCHIVED) {
+            throw new IllegalStateException("Archived club cannot be activated");
+        }
+        this.status = ClubStatus.ACTIVE;
     }
 
     public void disable() {
+        if (status == ClubStatus.ARCHIVED) {
+            throw new IllegalStateException("Archived club cannot be disabled");
+        }
         this.status = ClubStatus.DISABLED;
     }
 
     public void archive() {
         this.status = ClubStatus.ARCHIVED;
+    }
+
+    public void markToConfirm() {
+        if (status == ClubStatus.ARCHIVED) {
+            throw new IllegalStateException("Archived club cannot be set to confirm");
+        }
+        this.status = ClubStatus.TO_CONFIRM;
+    }
+
+    public void changeStatus(ClubStatus newStatus) {
+        Objects.requireNonNull(newStatus, "newStatus");
+
+        if (this.status == newStatus) return;
+
+        if (this.status == ClubStatus.ARCHIVED) {
+            throw new IllegalStateException("Archived club status cannot be changed");
+        }
+
+        switch (newStatus) {
+            case ACTIVE -> activate();
+            case DISABLED -> disable();
+            case TO_CONFIRM -> markToConfirm();
+            case ARCHIVED -> archive();
+        }
     }
 
 }

@@ -8,7 +8,6 @@ import pl.volleyflow.clubmember.model.ClubMember;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
 
@@ -59,5 +58,17 @@ public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
                   and cm.user_account_id = :userIntId
             """, nativeQuery = true)
     List<ClubListView> findUserClubs(@Param("userIntId") Long userIntId);
+
+    @Query(value = """
+            select 1
+            from app.app.club_member
+            where user_account_id = :userId
+            and role = :role
+            and club_id = :clubId;
+            """, nativeQuery = true)
+    boolean findUserRoleInClub(@Param("clubId") Long clubId,
+                               @Param("userId") Long userId,
+                               @Param("role") String role);
+
 
 }

@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.volleyflow.club.model.Club;
-import pl.volleyflow.club.model.ClubNotFoundException;
+import pl.volleyflow.club.model.exceptions.ClubNotFoundException;
 import pl.volleyflow.club.repository.ClubRepository;
 import pl.volleyflow.clubmember.model.AddMemberRequest;
 import pl.volleyflow.clubmember.model.ClubMember;

@@ -30,6 +30,17 @@ public class ClubMapper {
                 .build();
     }
 
+    public static Club fromUpdateRequest(CreateClubRequest request) {
+        Objects.requireNonNull(request, "request");
+
+        return Club.builder()
+                .name(trimToNull(request.name()))
+                .description(trimToNull(request.description()))
+                .city(trimToNull(request.city()))
+                .logoUrl(trimToNull(request.logoUrl()))
+                .build();
+    }
+
     public static void applyUpdate(Club club, UpdateClubRequest request) {
         Objects.requireNonNull(club, "club");
         Objects.requireNonNull(request, "request");
@@ -63,4 +74,5 @@ public class ClubMapper {
                 .logoUrl(club.getLogoUrl())
                 .build();
     }
+
 }
