@@ -1,8 +1,11 @@
 package pl.volleyflow.authorization.model;
 
+import lombok.Builder;
+
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 
+@Builder
 public record UserUpdateRequest(
 
         @Size(max = 80) String firstName,

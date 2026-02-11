@@ -51,7 +51,7 @@ public final class UserAccountMapper {
                 .externalId(u.getExternalId())
                 .firstName(u.getFirstName())
                 .lastName(u.getLastName())
-                .avatar(u.getAvatarUrl())
+                .avatarUrl(u.getAvatarUrl())
                 .build();
     }
 

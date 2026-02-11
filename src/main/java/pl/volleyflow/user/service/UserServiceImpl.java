@@ -1,10 +1,10 @@
 package pl.volleyflow.user.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pl.volleyflow.authorization.model.UserRegisterRequest;
 import pl.volleyflow.authorization.model.UserUpdateRequest;
 import pl.volleyflow.user.model.GlobalRole;
@@ -44,6 +44,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<UserAccount> getUserByEmail(String email) {
         return userAccountRepository.findByEmail(email);
     }

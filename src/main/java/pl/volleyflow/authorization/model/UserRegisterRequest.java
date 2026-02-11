@@ -1,10 +1,13 @@
 package pl.volleyflow.authorization.model;
 
+import lombok.Builder;
+
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 
+@Builder
 public record UserRegisterRequest(
         @NotBlank @Email String email,
         @NotBlank @Size(min = 8, max = 72) String password,
