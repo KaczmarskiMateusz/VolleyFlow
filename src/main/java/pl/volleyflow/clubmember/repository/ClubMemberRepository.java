@@ -48,6 +48,7 @@ public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
 
     @Query(value = """
                 select
+                  c.external_id as externalId,
                   c.name as name,
                   c.created_at as createdAt,
                   c.logo_url as logoUrl,
