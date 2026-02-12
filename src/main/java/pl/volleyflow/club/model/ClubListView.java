@@ -5,8 +5,8 @@ import java.util.UUID;
 
 public record ClubListView(
         UUID externalId,
-        String getName,
-        Instant getCreatedAt,
-        String getLogoUrl,
-        String getRole) {
+        String name,
+        Instant createdAt,
+        String logoUrl,
+        String role) {
 }
