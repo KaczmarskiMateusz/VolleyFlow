@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.volleyflow.authorization.model.UserRegisterRequest;
 import pl.volleyflow.authorization.model.UserUpdateRequest;
+import pl.volleyflow.clubmember.model.MemberProfile;
 import pl.volleyflow.user.model.GlobalRole;
 import pl.volleyflow.user.model.UserAccount;
 import pl.volleyflow.user.model.UserAccountMapper;
@@ -29,27 +30,49 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserAccount registerUser(UserRegisterRequest request) {
-        if (userAccountRepository.existsByEmail(request.email())) {
-            throw new UserAlreadyExistsException("Email already taken: " + request.email());
+        String email = request.email() == null ? null : request.email().trim().toLowerCase();
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("email is required");
+        }
+
+        if (userAccountRepository.existsByLoginEmail(email)) {
+            throw new UserAlreadyExistsException("Email already taken: " + email);
         }
 
         UserAccount user = UserAccountMapper.fromRegisterRequest(request);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setGlobalRole(GlobalRole.USER);
 
-        UserAccount saved = userAccountRepository.save(user);
-        log.info("Registered user externalId={}, email={}", saved.getExternalId(), saved.getEmail());
+        MemberProfile profile = MemberProfile.builder()
+                .type("PERSON")
+                .contactEmail(email)
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .birthDate(request.birthDate())
+                .phoneNumber(request.phoneNumber())
+                .displayName(request.displayName())
+                .avatarUrl(request.avatar())
+                .build();
 
+        // Owning side is UserAccount (FK member_profile_id).
+        user.setMemberProfile(profile);
+        profile.setUserAccount(user);
+
+        UserAccount saved = userAccountRepository.save(user);
+        log.info("Registered user externalId={}, email={}", saved.getExternalId(), saved.getLoginEmail());
         return saved;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<UserAccount> getUserByEmail(String email) {
-        return userAccountRepository.findByEmail(email);
+        String normalized = email == null ? null : email.trim().toLowerCase();
+        if (normalized == null || normalized.isBlank()) return Optional.empty();
+        return userAccountRepository.findByLoginEmail(normalized);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDto getUserByExternalId(UUID externalId) {
         UserAccount user = userAccountRepository.findByExternalId(externalId)
                 .orElseThrow(() -> new UserNotFoundException("User with externalId " + externalId + " not found"));
@@ -65,7 +88,7 @@ public class UserServiceImpl implements UserService {
         UserAccountMapper.applyPut(user, request);
 
         UserAccount saved = userAccountRepository.save(user);
-        log.info("Put user successful externalId={}, email={}", externalId, saved.getEmail());
+        log.info("Put user successful externalId={}, email={}", externalId, saved.getLoginEmail());
         return UserAccountMapper.toDto(saved);
     }
 
@@ -78,18 +101,18 @@ public class UserServiceImpl implements UserService {
         UserAccountMapper.applyPatch(user, request);
 
         UserAccount saved = userAccountRepository.save(user);
-        log.info("Patch user successful externalId={}, email={}", saved.getExternalId(), saved.getEmail());
+        log.info("Patch user successful externalId={}, email={}", saved.getExternalId(), saved.getLoginEmail());
         return UserAccountMapper.toDto(saved);
     }
 
     @Override
+    @Transactional
     public void deleteUser(UUID externalId) {
         UserAccount user = userAccountRepository.findByExternalId(externalId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         userAccountRepository.delete(user);
-        log.info("Deleted user externalId={}, email={}", externalId, user.getEmail());
+        log.info("Deleted user externalId={}, email={}", externalId, user.getLoginEmail());
     }
-
 
 }

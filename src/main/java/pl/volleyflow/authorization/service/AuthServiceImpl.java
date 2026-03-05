@@ -28,7 +28,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse register(UserRegisterRequest request) {
         UserAccount userAccount = userService.registerUser(request);
-        LOGGER.info("User account {} registered successfully.", userAccount.getEmail());
+        LOGGER.info("User account {} registered successfully.", userAccount.getLoginEmail());
 
         String token = jwtService.generateToken(userAccount);
         UserDto userDto = UserAccountMapper.toDto(userAccount);

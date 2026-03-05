@@ -8,11 +8,11 @@ import java.util.UUID;
 
 public interface UserAccountRepository extends CrudRepository<UserAccount, Long> {
 
-    Optional<UserAccount> findByEmailAndExternalId(String email, UUID externalId);
+    Optional<UserAccount> findByLoginEmailAndExternalId(String loginEmail, UUID externalId);
 
-    Optional<UserAccount> findByEmail(String email);
+    Optional<UserAccount> findByLoginEmail(String loginEmail);
 
-    boolean existsByEmail(String email);
+    boolean existsByLoginEmail(String loginEmail);
 
     boolean existsByExternalId(UUID externalId);
 
