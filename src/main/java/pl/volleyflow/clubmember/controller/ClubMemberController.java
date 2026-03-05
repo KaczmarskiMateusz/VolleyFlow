@@ -28,21 +28,4 @@ public class ClubMemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-//    @PostMapping("/{memberExternalId}/resend-invitation")
-//    public ResponseEntity<Void> resendInvitation(@PathVariable UUID clubExternalId,
-//                                                 @PathVariable UUID memberExternalId,
-//                                                 @AuthenticationPrincipal UserPrincipal principal) {
-//        clubMemberService.resendInvitation(clubExternalId, memberExternalId);
-//        return ResponseEntity.noContent().build();
-//    }
-//
-//    @DeleteMapping("/{memberExternalId}")
-//    public ResponseEntity<Void> removeMember(@PathVariable UUID clubExternalId,
-//                                             @PathVariable UUID memberExternalId,
-//                                             @AuthenticationPrincipal UserPrincipal principal) {
-//        clubMemberService.removeMember(clubExternalId, memberExternalId);
-//        return ResponseEntity.noContent().build();
-//    }
-
 }
-
