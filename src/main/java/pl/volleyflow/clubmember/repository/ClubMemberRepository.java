@@ -1,8 +1,8 @@
 package pl.volleyflow.clubmember.repository;
 
-import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import pl.volleyflow.club.model.ClubListView;
 import pl.volleyflow.clubmember.model.ClubMember;
 
@@ -14,8 +14,10 @@ public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
     @Query(value = """
                 select cm.*
                 from app.club_member cm
+                join app.member_profile mp on mp.id = cm.member_profile_id
+                join app.user_account ua on ua.member_profile_id = mp.id
                 where cm.club_id = :clubId
-                  and cm.user_account_id = :userId
+                  and ua.id = :userId
                   and cm.status = :status
                 limit 1
             """, nativeQuery = true)
@@ -27,19 +29,22 @@ public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
                 select exists(
                     select 1
                     from app.club_member cm
+                    join app.member_profile mp on mp.id = cm.member_profile_id
                     where cm.club_id = :clubId
-                      and cm.invited_email = :email
+                      and lower(mp.contact_email) = lower(:email)
                 )
             """, nativeQuery = true)
-    boolean existsByClubIdAndInvitedEmail(@Param("clubId") Long clubId,
+    boolean existsByClubIdAndContactEmail(@Param("clubId") Long clubId,
                                           @Param("email") String email);
 
     @Query(value = """
                 select exists(
                     select 1
                     from app.club_member cm
+                    join app.member_profile mp on mp.id = cm.member_profile_id
+                    join app.user_account ua on ua.member_profile_id = mp.id
                     where cm.club_id = :clubId
-                      and cm.user_account_id = :userId
+                      and ua.id = :userId
                       and cm.status = 'ACTIVE'
                 )
             """, nativeQuery = true)
@@ -54,22 +59,37 @@ public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
                   c.logo_url as logoUrl,
                   cm.role as role
                 from app.club_member cm
+                join app.member_profile mp on mp.id = cm.member_profile_id
+                join app.user_account ua on ua.member_profile_id = mp.id
                 join app.club c on cm.club_id = c.id
                 where cm.status = 'ACTIVE'
-                  and cm.user_account_id = :userIntId
+                  and ua.id = :userIntId
             """, nativeQuery = true)
     List<ClubListView> findUserClubs(@Param("userIntId") Long userIntId);
 
     @Query(value = """
-            select 1
-            from app.app.club_member
-            where user_account_id = :userId
-            and role = :role
-            and club_id = :clubId;
+            select exists(
+                select 1
+                from app.club_member cm
+                join app.member_profile mp on mp.id = cm.member_profile_id
+                join app.user_account ua on ua.member_profile_id = mp.id
+                where ua.id = :userId
+                  and cm.role = :role
+                  and cm.club_id = :clubId
+                  and cm.status = 'ACTIVE'
+            )
             """, nativeQuery = true)
     boolean findUserRoleInClub(@Param("clubId") Long clubId,
                                @Param("userId") Long userId,
                                @Param("role") String role);
 
+    @Query("""
+            select (count(cm) > 0)
+            from ClubMember cm
+            where cm.club.id = :clubId
+              and cm.memberProfile.id = :profileId
+            """)
+    boolean existsByClubIdAndProfileId(@Param("clubId") Long clubId,
+                                       @Param("profileId") Long profileId);
 
 }

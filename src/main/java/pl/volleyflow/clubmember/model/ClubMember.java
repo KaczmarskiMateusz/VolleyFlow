@@ -2,36 +2,42 @@ package pl.volleyflow.clubmember.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import pl.volleyflow.club.model.Club;
 import pl.volleyflow.club.model.ClubRole;
-import pl.volleyflow.user.model.UserAccount;
 
 import java.time.Instant;
 import java.util.UUID;
 
-@Getter
-@Setter(AccessLevel.PRIVATE)
-@NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder(access = AccessLevel.PRIVATE)
 @Entity
 @Table(
         name = "club_member",
         uniqueConstraints = {
+                // one person only once per club
                 @UniqueConstraint(
-                        name = "uk_club_member_club_invited_email",
-                        columnNames = {"club_id", "invited_email"}
+                        name = "uk_club_member_club_profile",
+                        columnNames = {"club_id", "member_profile_id"}
+                ),
+                // jersey number unique per club (optional)
+                @UniqueConstraint(
+                        name = "uk_club_member_club_jersey_number",
+                        columnNames = {"club_id", "jersey_number"}
                 )
         },
         indexes = {
-                @Index(name = "idx_club_member_club_id", columnList = "club_id"),
-                @Index(name = "idx_club_member_user_id", columnList = "user_account_id"),
-                @Index(name = "idx_club_member_invited_email", columnList = "invited_email"),
-                @Index(name = "idx_club_member_status", columnList = "status")
+                @Index(name = "ix_club_member_external_id", columnList = "external_id"),
+                @Index(name = "ix_club_member_club_id", columnList = "club_id"),
+                @Index(name = "ix_club_member_profile_id", columnList = "member_profile_id"),
+                @Index(name = "ix_club_member_status", columnList = "status"),
+                @Index(name = "ix_club_member_role", columnList = "role")
         }
 )
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class ClubMember {
 
     @Id
@@ -39,98 +45,114 @@ public class ClubMember {
     private Long id;
 
     @EqualsAndHashCode.Include
+    @ToString.Include
     @Column(name = "external_id", nullable = false, unique = true, updatable = false)
     private UUID externalId;
 
-    @Column(name = "club_id", nullable = false)
-    private Long clubId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "club_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_club_member_club")
+    )
+    @ToString.Exclude
+    private Club club;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_account_id")
-    private UserAccount user;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "member_profile_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_club_member_profile")
+    )
+    @ToString.Exclude
+    private MemberProfile memberProfile;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
+    @Column(name = "role", nullable = false)
     private ClubRole role;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false)
     private MembershipStatus status;
 
-    @Column(name = "invited_email", length = 320)
-    private String invitedEmail;
+    // Who created the membership/invitation (optional). Stored as user externalId to avoid hard coupling.
+    @Column(name = "created_by_user_external_id")
+    private UUID createdByUserExternalId;
 
-    @Column(name = "invite_token", length = 128, unique = true)
-    private String inviteToken;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "position")
+    private VolleyballPosition position;
 
-    @Column(name = "invite_expires_at")
-    private Instant inviteExpiresAt;
+    // Jersey number inside the club. Beware of null uniqueness semantics depending on DB.
+    @Column(name = "jersey_number")
+    private Integer jerseyNumber;
 
-    @Column(name = "invite_accepted_at")
-    private Instant inviteAcceptedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invited_by_user_account_id")
-    private UserAccount invitedBy;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
-    @Version
-    @Column(nullable = false)
-    private Integer version;
+    // True if this membership represents a player profile (vs coach, physio, etc.).
+    @Column(name = "is_player", nullable = false)
+    private boolean player;
 
     @Column(name = "joined_at")
     private Instant joinedAt;
 
+    @Column(name = "left_at")
+    private Instant leftAt;
+
+    @Column(name = "notes", columnDefinition = "text")
+    private String notes;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Integer version;
+
+    public static ClubMember createOwner(Club club, MemberProfile profile) {
+        ClubMember m = new ClubMember();
+        m.setClub(club);
+        m.setMemberProfile(profile);
+        m.setRole(ClubRole.OWNER);
+        m.setStatus(MembershipStatus.ACTIVE);
+        m.setPlayer(true);
+        m.setJoinedAt(Instant.now());
+        m.setCreatedByUserExternalId(null);
+        return m;
+    }
+
+    public void activate() {
+        this.status = MembershipStatus.ACTIVE;
+        if (this.joinedAt == null) this.joinedAt = Instant.now();
+        this.leftAt = null;
+    }
+
+    public void leave() {
+        this.status = MembershipStatus.LEFT;
+        this.leftAt = Instant.now();
+    }
+
+    public void remove() {
+        this.status = MembershipStatus.REMOVED;
+        this.leftAt = Instant.now();
+    }
+
     @PrePersist
     void prePersist() {
         if (externalId == null) externalId = UUID.randomUUID();
+        Instant now = Instant.now();
+        if (createdAt == null) createdAt = now;
+        if (updatedAt == null) updatedAt = now;
+
+        // safe defaults
+        if (role == null) role = ClubRole.MEMBER;
+        if (status == null) status = MembershipStatus.ACTIVE;
+        if (status == MembershipStatus.ACTIVE && joinedAt == null) joinedAt = now;
     }
 
-    public static ClubMember invite(Long clubId,
-                                    ClubRole role,
-                                    String invitedEmailNormalized,
-                                    String inviteToken,
-                                    Instant inviteExpiresAt,
-                                    UserAccount invitedBy,
-                                    UserAccount userOrNull) {
-
-        return ClubMember.builder()
-                .clubId(clubId)
-                .role(role)
-                .status(MembershipStatus.INVITED)
-                .invitedEmail(invitedEmailNormalized)
-                .inviteToken(inviteToken)
-                .inviteExpiresAt(inviteExpiresAt)
-                .invitedBy(invitedBy)
-                .user(userOrNull)
-                .build();
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = Instant.now();
     }
-
-    public void accept(UserAccount user) {
-        this.user = user;
-        this.status = MembershipStatus.ACTIVE;
-        this.inviteAcceptedAt = Instant.now();
-        this.joinedAt = Instant.now();
-        this.inviteToken = null;
-        this.inviteExpiresAt = null;
-    }
-
-    public static ClubMember createOwner(Long clubId, UserAccount user) {
-        return ClubMember.builder()
-                .clubId(clubId)
-                .user(user)
-                .role(ClubRole.OWNER)
-                .status(MembershipStatus.ACTIVE)
-                .joinedAt(Instant.now())
-                .build();
-    }
-
-
 }
