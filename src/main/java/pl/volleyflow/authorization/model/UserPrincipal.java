@@ -7,6 +7,5 @@ import java.util.UUID;
 
 public record UserPrincipal(
         UUID externalId,
-        String email,
         Collection<? extends GrantedAuthority> authorities
 ) {}
