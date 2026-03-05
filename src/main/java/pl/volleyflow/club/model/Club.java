@@ -2,27 +2,27 @@ package pl.volleyflow.club.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import pl.volleyflow.clubmember.model.ClubMember;
 
-import java.time.Instant;
-import java.util.Objects;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(
         name = "club",
-        schema = "app",
         indexes = {
-                @Index(name = "ix_club_external_id", columnList = "external_id"),
-                @Index(name = "ix_club_name", columnList = "name"),
-                @Index(name = "ix_club_status", columnList = "status")
+                @Index(name = "ix_club_external_id", columnList = "external_id")
         }
 )
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder(toBuilder = true)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class Club {
 
     @Id
@@ -30,96 +30,59 @@ public class Club {
     private Long id;
 
     @EqualsAndHashCode.Include
+    @ToString.Include
     @Column(name = "external_id", nullable = false, unique = true, updatable = false)
     private UUID externalId;
 
-    @Column(name = "name", nullable = false, length = 160)
-    @Setter
+    @ToString.Include
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "description", length = 2000)
-    @Setter
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    @Column(name = "city", length = 120)
-    @Setter
+    @Column(name = "city")
     private String city;
 
-    @Column(name = "logo_url", length = 2048)
-    @Setter
+    @Column(name = "logo_url")
     private String logoUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 30)
-    @Builder.Default
-    private ClubStatus status = ClubStatus.ACTIVE;
+    @Column(name = "status", nullable = false)
+    private ClubStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private OffsetDateTime updatedAt;
 
     @Version
-    @Column(nullable = false)
+    @Column(name = "version", nullable = false)
     private Integer version;
+
+    @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    private List<ClubMember> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "club", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    private List<ClubAuditLog> auditLogs = new ArrayList<>();
 
     @PrePersist
     void prePersist() {
         if (externalId == null) externalId = UUID.randomUUID();
-
-        Instant now = Instant.now();
+        OffsetDateTime now = OffsetDateTime.now();
         if (createdAt == null) createdAt = now;
-        updatedAt = now;
-
-        if (status == null) status = ClubStatus.ACTIVE;
+        if (updatedAt == null) updatedAt = now;
+        if (status == null) status = ClubStatus.TO_CONFIRM;
     }
 
     @PreUpdate
     void preUpdate() {
-        updatedAt = Instant.now();
-    }
-
-    public void activate() {
-        if (status == ClubStatus.ARCHIVED) {
-            throw new IllegalStateException("Archived club cannot be activated");
-        }
-        this.status = ClubStatus.ACTIVE;
-    }
-
-    public void disable() {
-        if (status == ClubStatus.ARCHIVED) {
-            throw new IllegalStateException("Archived club cannot be disabled");
-        }
-        this.status = ClubStatus.DISABLED;
-    }
-
-    public void archive() {
-        this.status = ClubStatus.ARCHIVED;
-    }
-
-    public void markToConfirm() {
-        if (status == ClubStatus.ARCHIVED) {
-            throw new IllegalStateException("Archived club cannot be set to confirm");
-        }
-        this.status = ClubStatus.TO_CONFIRM;
-    }
-
-    public void changeStatus(ClubStatus newStatus) {
-        Objects.requireNonNull(newStatus, "newStatus");
-
-        if (this.status == newStatus) return;
-
-        if (this.status == ClubStatus.ARCHIVED) {
-            throw new IllegalStateException("Archived club status cannot be changed");
-        }
-
-        switch (newStatus) {
-            case ACTIVE -> activate();
-            case DISABLED -> disable();
-            case TO_CONFIRM -> markToConfirm();
-            case ARCHIVED -> archive();
-        }
+        updatedAt = OffsetDateTime.now();
     }
 
 }
