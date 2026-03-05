@@ -8,6 +8,7 @@ public enum ErrorCode {
 
 
     //USER
+    USER_NOT_FOUND,
 
 
     // CLUB
