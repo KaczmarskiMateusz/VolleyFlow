@@ -30,11 +30,10 @@ public class JwtService {
         Instant exp = now.plusSeconds(props.expiration());
 
         return Jwts.builder()
-                .setIssuer(props.issuer())
+                .setIssuer(props.isUser())
                 .setSubject(user.getExternalId().toString())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(exp))
-                .claim("email", user.getEmail())
                 .claim("role", user.getGlobalRole().name())
                 .signWith(signingKey(), SignatureAlgorithm.HS256)
                 .compact();

@@ -76,7 +76,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         UserPrincipal principal = new UserPrincipal(
                 user.getExternalId(),
-                user.getEmail(),
                 authorities
         );
 
