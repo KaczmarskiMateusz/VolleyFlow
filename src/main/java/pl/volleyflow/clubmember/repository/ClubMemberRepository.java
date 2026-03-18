@@ -83,12 +83,12 @@ public interface ClubMemberRepository extends CrudRepository<ClubMember, Long> {
                                @Param("userId") Long userId,
                                @Param("role") String role);
 
-    @Query("""
+    @Query(value = """
             select (count(cm) > 0)
             from ClubMember cm
             where cm.club.id = :clubId
               and cm.memberProfile.id = :profileId
-            """)
+            """, nativeQuery = true)
     boolean existsByClubIdAndProfileId(@Param("clubId") Long clubId,
                                        @Param("profileId") Long profileId);
 

@@ -1,18 +1,25 @@
-package pl.volleyflow.clubmember.service;
+﻿package pl.volleyflow.clubmember.service;
 
+import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.volleyflow.club.model.Club;
 import pl.volleyflow.club.model.ClubRole;
+import pl.volleyflow.club.model.exceptions.ClubNotFoundException;
 import pl.volleyflow.club.repository.ClubRepository;
 import pl.volleyflow.clubmember.model.*;
+import pl.volleyflow.clubmember.model.exceptions.ClubMemberAlreadyExistsException;
+import pl.volleyflow.clubmember.model.exceptions.ClubMemberForbiddenException;
+import pl.volleyflow.clubmember.model.exceptions.ClubMemberValidationException;
 import pl.volleyflow.clubmember.repository.ClubMemberRepository;
 import pl.volleyflow.clubmember.repository.MemberProfileRepository;
 import pl.volleyflow.user.model.UserAccount;
 import pl.volleyflow.user.repository.UserAccountRepository;
+import pl.volleyflow.user.service.exceptions.UserNotFoundException;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
@@ -30,55 +37,111 @@ public class ClubMemberServiceImpl implements ClubMemberService {
     public MemberResponse addMember(UUID clubExternalId,
                                     AddMemberRequest request,
                                     UUID inviterExternalId) {
-        if (clubExternalId == null) throw new IllegalArgumentException("clubExternalId is required");
-        if (request == null) throw new IllegalArgumentException("request is required");
-        if (inviterExternalId == null) throw new IllegalArgumentException("inviterExternalId is required");
+        validateInputs(clubExternalId, request, inviterExternalId);
 
         Club club = clubRepository.findByExternalId(clubExternalId)
-                .orElseThrow(() -> new IllegalArgumentException("Club not found: " + clubExternalId));
+                .orElseThrow(() -> new ClubNotFoundException(clubExternalId.toString()));
 
         UserAccount inviter = userAccountRepository.findByExternalId(inviterExternalId)
-                .orElseThrow(() -> new IllegalArgumentException("Inviter user not found: " + inviterExternalId));
+                .orElseThrow(() -> new UserNotFoundException("Inviter user not found: " + inviterExternalId));
 
-        boolean isOwner = clubMemberRepository.findUserRoleInClub(club.getId(), inviter.getId(), ClubRole.OWNER.name());
-        if (!isOwner) {
-            throw new IllegalArgumentException("No permissions to add members");
-        }
+        ensureOwner(inviter, club);
 
-        String email = request.email() == null ? null : request.email().trim().toLowerCase();
-        if (email != null && email.isBlank()) email = null;
+        String email = normalizeEmail(request.email());
+        ensureProfileDataIsPresent(request, email);
 
-        if (email == null
-                && (request.displayName() == null || request.displayName().isBlank())
-                && (request.firstName() == null || request.firstName().isBlank())
-                && (request.lastName() == null || request.lastName().isBlank())) {
-            throw new IllegalArgumentException("Provide at least email or name/displayName");
-        }
-
-        MemberProfile profile = (email == null)
-                ? new MemberProfile()
-                : memberProfileRepository.findByContactEmailIgnoreCase(email).orElseGet(MemberProfile::new);
-
-        // Fill only missing fields when profile already exists.
-        if (profile.getType() == null) profile.setType("PERSON");
-        if (profile.getContactEmail() == null) profile.setContactEmail(email);
-
-        if (request.firstName() != null && (profile.getFirstName() == null || profile.getFirstName().isBlank())) {
-            profile.setFirstName(request.firstName());
-        }
-        if (request.lastName() != null && (profile.getLastName() == null || profile.getLastName().isBlank())) {
-            profile.setLastName(request.lastName());
-        }
-        if (request.displayName() != null && (profile.getDisplayName() == null || profile.getDisplayName().isBlank())) {
-            profile.setDisplayName(request.displayName());
-        }
-
+        MemberProfile profile = resolveProfile(email);
+        enrichProfile(profile, request, email);
         profile = memberProfileRepository.save(profile);
 
-        if (clubMemberRepository.existsByClubIdAndProfileId(club.getId(), profile.getId())) {
-            throw new IllegalArgumentException("This profile is already a member of this club");
+        ensureNotAlreadyClubMember(club, profile);
+
+        ClubMember membership = buildMembership(club, profile, request, inviterExternalId, email);
+        ClubMember saved = clubMemberRepository.save(membership);
+
+        UUID linkedUserExternalId = profile.getUserAccount() == null ? null : profile.getUserAccount().getExternalId();
+
+        log.info("Added member clubExternalId={}, profileExternalId={}, status={}",
+                clubExternalId, profile.getExternalId(), saved.getStatus());
+
+        return mapToResponse(saved, profile, linkedUserExternalId);
+    }
+
+    private void validateInputs(UUID clubExternalId, AddMemberRequest request, UUID inviterExternalId) {
+        if (clubExternalId == null) {
+            throw new ClubMemberValidationException("clubExternalId is required");
+        }
+        if (request == null) {
+            throw new ClubMemberValidationException("request is required");
+        }
+        if (inviterExternalId == null) {
+            throw new ClubMemberValidationException("inviterExternalId is required");
+        }
+    }
+
+    private void ensureOwner(UserAccount inviter, Club club) {
+        boolean isOwner = clubMemberRepository.findUserRoleInClub(club.getId(), inviter.getId(), ClubRole.OWNER.name());
+        if (!isOwner) {
+            throw new ClubMemberForbiddenException("No permissions to add members");
+        }
+    }
+
+    private String normalizeEmail(String email) {
+        if (StringUtils.isBlank(email)) {
+            return null;
+        }
+        return email.trim().toLowerCase();
+    }
+
+    private void ensureProfileDataIsPresent(AddMemberRequest request, String email) {
+        if (StringUtils.isNotBlank(email)) {
+            return;
         }
 
+        if (StringUtils.isBlank(request.displayName())
+                && StringUtils.isBlank(request.firstName())
+                && StringUtils.isBlank(request.lastName())) {
+            log.info("Missing profile data, email is blank and displayName/firstName/lastName are empty."
+                            + " displayName={}, firstName={}, lastName={}",
+                    request.displayName(), request.firstName(), request.lastName());
+            throw new ClubMemberValidationException("Provide at least email or name/displayName");
+        }
+    }
+
+    private MemberProfile resolveProfile(String email) {
+        if (StringUtils.isBlank(email)) {
+            return new MemberProfile();
+        }
+        return memberProfileRepository.findByContactEmailIgnoreCase(email)
+                .orElseGet(MemberProfile::new);
+    }
+
+    private void enrichProfile(MemberProfile profile, AddMemberRequest request, String email) {
+        if (StringUtils.isBlank(profile.getContactEmail())) {
+            profile.setContactEmail(email);
+        }
+        if (!StringUtils.isBlank(request.firstName())) {
+            profile.setFirstName(request.firstName());
+        }
+        if (!StringUtils.isBlank(request.lastName())) {
+            profile.setLastName(request.lastName());
+        }
+        if (!StringUtils.isBlank(request.displayName())) {
+            profile.setDisplayName(request.displayName());
+        }
+    }
+
+    private void ensureNotAlreadyClubMember(Club club, MemberProfile profile) {
+        if (clubMemberRepository.existsByClubIdAndProfileId(club.getId(), profile.getId())) {
+            throw new ClubMemberAlreadyExistsException("This profile is already a member of this club");
+        }
+    }
+
+    private ClubMember buildMembership(Club club,
+                                       MemberProfile profile,
+                                       AddMemberRequest request,
+                                       UUID inviterExternalId,
+                                       String email) {
         ClubRole role = request.role() == null ? ClubRole.MEMBER : request.role();
         boolean player = request.player() == null || request.player();
 
@@ -89,22 +152,18 @@ public class ClubMemberServiceImpl implements ClubMemberService {
         membership.setPlayer(player);
         membership.setCreatedByUserExternalId(inviterExternalId);
 
-        // If the profile isn't linked to a user account yet, treat email-based add as invitation.
         boolean linkedToAccount = profile.getUserAccount() != null;
         if (!linkedToAccount && email != null) {
             membership.setStatus(MembershipStatus.INVITED);
         } else {
             membership.setStatus(MembershipStatus.ACTIVE);
-            membership.setJoinedAt(java.time.Instant.now());
+            membership.setJoinedAt(Instant.now());
         }
 
-        ClubMember saved = clubMemberRepository.save(membership);
+        return membership;
+    }
 
-        UUID linkedUserExternalId = profile.getUserAccount() == null ? null : profile.getUserAccount().getExternalId();
-
-        log.info("Added member clubExternalId={}, profileExternalId={}, status={}",
-                clubExternalId, profile.getExternalId(), saved.getStatus());
-
+    private MemberResponse mapToResponse(ClubMember saved, MemberProfile profile, UUID linkedUserExternalId) {
         return new MemberResponse(
                 saved.getExternalId(),
                 profile.getExternalId(),

@@ -44,7 +44,6 @@ public class UserServiceImpl implements UserService {
         user.setGlobalRole(GlobalRole.USER);
 
         MemberProfile profile = MemberProfile.builder()
-                .type("PERSON")
                 .contactEmail(email)
                 .firstName(request.firstName())
                 .lastName(request.lastName())
@@ -54,7 +53,6 @@ public class UserServiceImpl implements UserService {
                 .avatarUrl(request.avatar())
                 .build();
 
-        // Owning side is UserAccount (FK member_profile_id).
         user.setMemberProfile(profile);
         profile.setUserAccount(user);
 

@@ -36,10 +36,6 @@ public class MemberProfile {
     @Column(name = "external_id", nullable = false, unique = true, updatable = false)
     private UUID externalId;
 
-    @ToString.Include
-    @Column(name = "type", nullable = false)
-    private String type;
-
     @Column(name = "first_name")
     private String firstName;
 
@@ -93,7 +89,6 @@ public class MemberProfile {
     @PrePersist
     void prePersist() {
         if (externalId == null) externalId = UUID.randomUUID();
-        if (type == null) type = "PERSON";
 
         if (displayName == null) {
             String fn = firstName == null ? "" : firstName.trim();

@@ -1,4 +1,4 @@
-package pl.volleyflow.authorization.model;
+﻿package pl.volleyflow.authorization.model;
 
 public enum ErrorCode {
 
@@ -16,5 +16,9 @@ public enum ErrorCode {
 
 
     // CLUB MEMBER
+    CLUB_NOT_FOUND,
+    CLUB_MEMBER_ALREADY_EXISTS,
+    CLUB_MEMBER_FORBIDDEN,
+    CLUB_MEMBER_INVALID_REQUEST,
 
 }
