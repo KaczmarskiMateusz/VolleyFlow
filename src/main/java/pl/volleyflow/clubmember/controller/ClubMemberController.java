@@ -10,7 +10,7 @@ import pl.volleyflow.clubmember.model.AddMemberRequest;
 import pl.volleyflow.clubmember.model.MemberResponse;
 import pl.volleyflow.clubmember.service.ClubMemberService;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.UUID;
 
 @RestController

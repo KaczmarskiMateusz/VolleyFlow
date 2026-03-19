@@ -9,7 +9,7 @@ import pl.volleyflow.authorization.model.UserLoginRequest;
 import pl.volleyflow.authorization.model.UserRegisterRequest;
 import pl.volleyflow.authorization.service.AuthService;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/app/auth")
