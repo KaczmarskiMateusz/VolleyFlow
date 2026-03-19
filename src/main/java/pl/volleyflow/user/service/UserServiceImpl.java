@@ -8,12 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.volleyflow.authorization.model.UserRegisterRequest;
 import pl.volleyflow.authorization.model.UserUpdateRequest;
 import pl.volleyflow.clubmember.model.MemberProfile;
+import pl.volleyflow.clubmember.repository.MemberProfileRepository;
 import pl.volleyflow.user.model.GlobalRole;
 import pl.volleyflow.user.model.UserAccount;
 import pl.volleyflow.user.model.UserAccountMapper;
 import pl.volleyflow.user.model.UserDto;
 import pl.volleyflow.user.repository.UserAccountRepository;
-import pl.volleyflow.user.service.exceptions.UserAlreadyExistsException;
+import pl.volleyflow.user.service.exceptions.EmailAlreadyExistsException;
 import pl.volleyflow.user.service.exceptions.UserNotFoundException;
 
 import java.util.Optional;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserAccountRepository userAccountRepository;
+    private final MemberProfileRepository memberProfileRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -36,22 +38,16 @@ public class UserServiceImpl implements UserService {
         }
 
         if (userAccountRepository.existsByLoginEmail(email)) {
-            throw new UserAlreadyExistsException("Email already taken: " + email);
+            throw new EmailAlreadyExistsException(email);
         }
 
         UserAccount user = UserAccountMapper.fromRegisterRequest(request);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setGlobalRole(GlobalRole.USER);
 
-        MemberProfile profile = MemberProfile.builder()
-                .contactEmail(email)
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .birthDate(request.birthDate())
-                .phoneNumber(request.phoneNumber())
-                .displayName(request.displayName())
-                .avatarUrl(request.avatar())
-                .build();
+        MemberProfile profile = memberProfileRepository.findByContactEmailIgnoreCase(email)
+                .map(existing -> mergeRegistrationData(existing, request, email))
+                .orElseGet(() -> buildNewProfile(request, email));
 
         user.setMemberProfile(profile);
         profile.setUserAccount(user);
@@ -66,13 +62,13 @@ public class UserServiceImpl implements UserService {
     public Optional<UserAccount> getUserByEmail(String email) {
         String normalized = email == null ? null : email.trim().toLowerCase();
         if (normalized == null || normalized.isBlank()) return Optional.empty();
-        return userAccountRepository.findByLoginEmail(normalized);
+        return userAccountRepository.findByLoginEmailAndDeletedFalse(normalized);
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserDto getUserByExternalId(UUID externalId) {
-        UserAccount user = userAccountRepository.findByExternalId(externalId)
+        UserAccount user = userAccountRepository.findByExternalIdAndDeletedFalse(externalId)
                 .orElseThrow(() -> new UserNotFoundException("User with externalId " + externalId + " not found"));
         return UserAccountMapper.toDto(user);
     }
@@ -80,7 +76,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto putUser(UserUpdateRequest request, UUID externalId) {
-        UserAccount user = userAccountRepository.findByExternalId(externalId)
+        UserAccount user = userAccountRepository.findByExternalIdAndDeletedFalse(externalId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         UserAccountMapper.applyPut(user, request);
@@ -93,7 +89,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto patchUser(UserUpdateRequest request, UUID externalId) {
-        UserAccount user = userAccountRepository.findByExternalId(externalId)
+        UserAccount user = userAccountRepository.findByExternalIdAndDeletedFalse(externalId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         UserAccountMapper.applyPatch(user, request);
@@ -106,11 +102,57 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(UUID externalId) {
-        UserAccount user = userAccountRepository.findByExternalId(externalId)
+        UserAccount user = userAccountRepository.findByExternalIdAndDeletedFalse(externalId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        userAccountRepository.delete(user);
-        log.info("Deleted user externalId={}, email={}", externalId, user.getLoginEmail());
+        user.softDelete();
+        userAccountRepository.save(user);
+        log.info("Soft-deleted user externalId={}, email={}", externalId, user.getLoginEmail());
+    }
+
+    private MemberProfile buildNewProfile(UserRegisterRequest request, String email) {
+        return MemberProfile.builder()
+                .contactEmail(email)
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .birthDate(request.birthDate())
+                .phoneNumber(request.phoneNumber())
+                .displayName(request.displayName())
+                .avatarUrl(request.avatar())
+                .build();
+    }
+
+    private MemberProfile mergeRegistrationData(MemberProfile existing, UserRegisterRequest request, String email) {
+        if (existing.getUserAccount() != null) {
+            throw new EmailAlreadyExistsException(email);
+        }
+
+        if (existing.getContactEmail() == null || existing.getContactEmail().isBlank()) {
+            existing.setContactEmail(email);
+        }
+        if (hasText(request.firstName())) {
+            existing.setFirstName(request.firstName());
+        }
+        if (hasText(request.lastName())) {
+            existing.setLastName(request.lastName());
+        }
+        if (request.birthDate() != null) {
+            existing.setBirthDate(request.birthDate());
+        }
+        if (hasText(request.phoneNumber())) {
+            existing.setPhoneNumber(request.phoneNumber());
+        }
+        if (hasText(request.displayName())) {
+            existing.setDisplayName(request.displayName());
+        }
+        if (hasText(request.avatar())) {
+            existing.setAvatarUrl(request.avatar());
+        }
+        return existing;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
 }

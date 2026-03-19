@@ -60,7 +60,7 @@ public class UserAccount {
     @Column(name = "version", nullable = false)
     private Integer version;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(
             name = "member_profile_id",
             nullable = false,

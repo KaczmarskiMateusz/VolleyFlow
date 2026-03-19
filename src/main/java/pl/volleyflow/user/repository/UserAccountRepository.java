@@ -12,9 +12,15 @@ public interface UserAccountRepository extends CrudRepository<UserAccount, Long>
 
     Optional<UserAccount> findByLoginEmail(String loginEmail);
 
+    Optional<UserAccount> findByLoginEmailAndDeletedFalse(String loginEmail);
+
     boolean existsByLoginEmail(String loginEmail);
+
+    boolean existsByLoginEmailAndDeletedFalse(String loginEmail);
 
     boolean existsByExternalId(UUID externalId);
 
     Optional<UserAccount> findByExternalId(UUID externalId);
+
+    Optional<UserAccount> findByExternalIdAndDeletedFalse(UUID externalId);
 }

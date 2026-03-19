@@ -42,7 +42,7 @@ public class ClubMemberServiceImpl implements ClubMemberService {
         Club club = clubRepository.findByExternalId(clubExternalId)
                 .orElseThrow(() -> new ClubNotFoundException(clubExternalId.toString()));
 
-        UserAccount inviter = userAccountRepository.findByExternalId(inviterExternalId)
+        UserAccount inviter = userAccountRepository.findByExternalIdAndDeletedFalse(inviterExternalId)
                 .orElseThrow(() -> new UserNotFoundException("Inviter user not found: " + inviterExternalId));
 
         ensureOwner(inviter, club);

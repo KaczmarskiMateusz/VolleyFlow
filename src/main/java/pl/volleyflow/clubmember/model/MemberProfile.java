@@ -13,6 +13,9 @@ import java.util.UUID;
 @Entity
 @Table(
         name = "member_profile",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_member_profile_contact_email", columnNames = "contact_email")
+        },
         indexes = {
                 @Index(name = "ix_member_profile_external_id", columnList = "external_id"),
                 @Index(name = "ix_member_profile_contact_email", columnList = "contact_email")
@@ -48,7 +51,7 @@ public class MemberProfile {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    @Column(name = "contact_email")
+    @Column(name = "contact_email", unique = true)
     private String contactEmail;
 
     @Column(name = "phone_number")

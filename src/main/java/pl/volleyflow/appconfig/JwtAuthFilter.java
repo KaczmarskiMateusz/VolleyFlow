@@ -65,7 +65,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        UserAccount user = userAccountRepository.findByExternalId(externalId).orElse(null);
+        UserAccount user = userAccountRepository.findByExternalIdAndDeletedFalse(externalId).orElse(null);
         if (user == null) {
             filterChain.doFilter(request, response);
             return;
