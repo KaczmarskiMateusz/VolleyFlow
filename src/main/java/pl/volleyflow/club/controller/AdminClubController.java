@@ -13,13 +13,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/admin/clubs")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','ROOT')")
 @RequiredArgsConstructor
 public class AdminClubController {
 
     private final ClubService clubService;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ROOT')")
     @GetMapping
     public ResponseEntity<List<ClubDto>> getAllClubs() {
         return ResponseEntity.ok(clubService.getAllClubs());

@@ -30,7 +30,7 @@ public class JwtService {
         Instant exp = now.plusSeconds(props.expiration());
 
         return Jwts.builder()
-                .setIssuer(props.isUser())
+                .setIssuer(props.issuer())
                 .setSubject(user.getExternalId().toString())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(exp))
