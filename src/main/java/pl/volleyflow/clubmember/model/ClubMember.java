@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import pl.volleyflow.club.model.Club;
 import pl.volleyflow.club.model.ClubRole;
+import pl.volleyflow.clubmember.model.memberprofile.MemberProfile;
+import pl.volleyflow.clubmember.model.memberprofile.MembershipStatus;
 
 import java.time.Instant;
 import java.util.UUID;

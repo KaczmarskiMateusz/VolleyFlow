@@ -1,7 +1,7 @@
 package pl.volleyflow.clubmember.service;
 
 import pl.volleyflow.clubmember.model.AddMemberRequest;
-import pl.volleyflow.clubmember.model.MemberResponse;
+import pl.volleyflow.clubmember.model.memberprofile.MemberResponse;
 
 import java.util.UUID;
 

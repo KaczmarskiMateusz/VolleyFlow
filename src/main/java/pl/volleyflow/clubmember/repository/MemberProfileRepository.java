@@ -1,7 +1,7 @@
 package pl.volleyflow.clubmember.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import pl.volleyflow.clubmember.model.MemberProfile;
+import pl.volleyflow.clubmember.model.memberprofile.MemberProfile;
 
 import java.util.Optional;
 import java.util.UUID;

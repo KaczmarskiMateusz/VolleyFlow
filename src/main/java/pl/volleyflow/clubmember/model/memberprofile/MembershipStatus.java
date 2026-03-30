@@ -1,4 +1,4 @@
-package pl.volleyflow.clubmember.model;
+package pl.volleyflow.clubmember.model.memberprofile;
 
 public enum MembershipStatus {
 

@@ -8,7 +8,7 @@ import pl.volleyflow.club.model.exceptions.ClubNotFoundException;
 import pl.volleyflow.club.model.exceptions.ClubPermissionException;
 import pl.volleyflow.club.repository.ClubRepository;
 import pl.volleyflow.clubmember.model.ClubMember;
-import pl.volleyflow.clubmember.model.MemberProfile;
+import pl.volleyflow.clubmember.model.memberprofile.MemberProfile;
 import pl.volleyflow.clubmember.repository.ClubMemberRepository;
 import pl.volleyflow.user.model.UserAccount;
 import pl.volleyflow.user.repository.UserAccountRepository;

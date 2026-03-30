@@ -2,7 +2,7 @@ package pl.volleyflow.user.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import pl.volleyflow.clubmember.model.MemberProfile;
+import pl.volleyflow.clubmember.model.memberprofile.MemberProfile;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -2,7 +2,7 @@ package pl.volleyflow.user.model;
 
 import pl.volleyflow.authorization.model.UserRegisterRequest;
 import pl.volleyflow.authorization.model.UserUpdateRequest;
-import pl.volleyflow.clubmember.model.MemberProfile;
+import pl.volleyflow.clubmember.model.memberprofile.MemberProfile;
 
 public final class UserAccountMapper {
 

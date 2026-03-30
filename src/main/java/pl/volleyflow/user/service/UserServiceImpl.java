@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.volleyflow.authorization.model.UserRegisterRequest;
 import pl.volleyflow.authorization.model.UserUpdateRequest;
-import pl.volleyflow.clubmember.model.MemberProfile;
+import pl.volleyflow.clubmember.model.memberprofile.MemberProfile;
 import pl.volleyflow.clubmember.repository.MemberProfileRepository;
 import pl.volleyflow.user.model.GlobalRole;
 import pl.volleyflow.user.model.UserAccount;

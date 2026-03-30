@@ -1,7 +1,9 @@
-package pl.volleyflow.clubmember.model;
+package pl.volleyflow.clubmember.model.memberprofile;
 
 import jakarta.persistence.*;
 import lombok.*;
+import pl.volleyflow.clubmember.model.ClubMember;
+import pl.volleyflow.clubmember.model.Gender;
 import pl.volleyflow.user.model.UserAccount;
 
 import java.time.Instant;

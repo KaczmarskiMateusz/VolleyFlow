@@ -7,7 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import pl.volleyflow.authorization.model.UserPrincipal;
 import pl.volleyflow.clubmember.model.AddMemberRequest;
-import pl.volleyflow.clubmember.model.MemberResponse;
+import pl.volleyflow.clubmember.model.memberprofile.MemberResponse;
 import pl.volleyflow.clubmember.service.ClubMemberService;
 
 import jakarta.validation.Valid;
