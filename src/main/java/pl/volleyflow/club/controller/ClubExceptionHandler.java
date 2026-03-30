@@ -17,7 +17,7 @@ public class ClubExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleClubPermissionException(ClubPermissionException ex) {
         ApiErrorResponse body = new ApiErrorResponse(
                 CLUB_PERMISSION_DENIED, "You do not have permission to perform this action on the club.");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
 }

@@ -2,6 +2,10 @@
 
 public enum ErrorCode {
 
+    //GLOBAL
+    METHOD_ARGUMENT_NOT_VALID_EXCEPTION,
+
+
     //AUTH
     AUTH_INVALID_CREDENTIALS,
     EMAIL_ALREADY_EXISTS,
